@@ -16,7 +16,16 @@ import sun.reflect.annotation.AnnotationParser;
 import java.lang.reflect.Method;
 
 public class db {
-	public static int insert(Connection con, Class<?> obj){
+	public static int insert(Connection con, Department obj){
+		for (Annotation a:obj.getClass().getAnnotations()){
+			System.out.printf("%n%s",a);
+		}
+		for (Field f:obj.getClass().getDeclaredFields()){
+			for (Annotation a:f.getAnnotations()){
+				System.out.printf("%n%s %s",f,a);
+			}
+			
+		}
 		return 1;
 	}
 	public static Class<?> find(Connection con,Class<?> obj,Class<?> index){
@@ -36,25 +45,24 @@ public class db {
 	public static void main(String[] args) throws SQLException, ClassNotFoundException{
 		PreparedStatement pstm = null;
 		ResultSet rs = null;
+		Connection c = null;
 		
 		Class.forName("org.hsqldb.jdbcDriver");
-		Connection c = DriverManager.getConnection("jdbc:hsqldb:hsql://localhost", "SA", "");
 		
-		DEPARTMENT dep = new DEPARTMENT();
-		dep.DEPT_ID = 60;
-		dep.DEPT_NAME = "ASD";
-		dep.DEPT_NO = "HASDFAS";
-		dep.LOCATION = "ASDdf";
-		//int r = tortoise.db.insert();		
-		for (Annotation a:dep.getClass().getAnnotations()){
-			System.out.printf("%n%s",a);
+		try {
+			c = DriverManager.getConnection("jdbc:hsqldb:hsql://localhost", "SA", "");
+		} catch (Exception e) {
+			System.out.println("No se pudo conectar a la base de datos");
+			System.exit(0);
 		}
-		for (Field f:dep.getClass().getDeclaredFields()){
-			for (Annotation a:f.getAnnotations()){
-				System.out.printf("%n%s",a);
-			}
-			
-		}
+		
+		Department dep = new Department();
+		dep.deptId = 60;
+		dep.deptName = "ASD";
+		dep.deptNo = "HASDFAS";
+		dep.location = "ASDdf";
+		int r = tortoise.db.insert(c,dep);		
+		
 		/*
 		Statement stm = c.createStatement();
 		
