@@ -9,23 +9,29 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 
 import sun.reflect.annotation.AnnotationParser;
 
 import java.lang.reflect.Method;
 
 public class db {
-	public static int insert(){
-		Class<Table> obj = Table.class;
-		if (obj.isAnnotationPresent(Table.class)) {
-
-			Annotation annotation = obj.getAnnotation(Table.class);
-			Table table = (Table) annotation;
-
-			System.out.printf("%s", table.test());
-		}
+	public static int insert(Connection con, Class<?> obj){
 		return 1;
 	}
+	public static Class<?> find(Connection con,Class<?> obj,Class<?> index){
+		return null;
+	}
+	public static List<?> query(Connection con,Class<?> obj,String tql,Object ... args){
+		return null;
+	}
+	public static int update(Connection con, Class<?> obj,String tql,Object ... args){
+		return 1;
+	}
+	public static int delete(Connection con, Class<?> obj,String tql,Object ... args){
+		return 1;
+	}
+	
 	
 	public static void main(String[] args) throws SQLException, ClassNotFoundException{
 		PreparedStatement pstm = null;
