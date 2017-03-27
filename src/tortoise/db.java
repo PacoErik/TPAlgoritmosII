@@ -4,6 +4,7 @@ import java.sql.DriverManager;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,13 +17,13 @@ import sun.reflect.annotation.AnnotationParser;
 import java.lang.reflect.Method;
 
 public class db {
-	public static int insert(Connection con, Department obj){
+	public static int insert(Connection con, Object obj){
 		for (Annotation a:obj.getClass().getAnnotations()){
 			System.out.printf("%n%s",a);
 		}
 		for (Field f:obj.getClass().getDeclaredFields()){
 			for (Annotation a:f.getAnnotations()){
-				System.out.printf("%n%s %s",f,a);
+				System.out.printf("%n%s %s",f.getName(),a);
 			}
 			
 		}
