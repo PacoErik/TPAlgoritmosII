@@ -38,11 +38,11 @@ public class db {
 				tql+=getAnnotationValue(a)+",";
 			}			
 		}
-		tql = tql.substring(0,tql.length()-1)+") VALUES ("; //borrar la última coma "," y agregar un ") VALUES ("
+		tql = tql.replaceFirst(".$",") VALUES ("); //borrar la última coma y reemplazarlo por ") VALUES ("
 		for (Field f:obj.getClass().getDeclaredFields()){
 			tql+=getFieldValue(f.get(obj))+",";
 		}
-		tql = tql.substring(0,tql.length()-1)+")";
+		tql = tql.replaceFirst(".$", ")");
 		int result = 0;
 		try {
 			result = st.executeUpdate(tql);
@@ -78,9 +78,9 @@ public class db {
 		}
 		
 		Department dep = new Department();
-		dep.deptId = 72;
+		dep.deptId = 74;
 		dep.deptName = "Hola";
-		dep.deptNo = "test";
+		dep.deptNo = "ohmygod";
 		dep.location = "Hola";
 		int r = tortoise.db.insert(c,dep);		
 		System.out.println(r);
