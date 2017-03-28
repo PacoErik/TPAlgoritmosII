@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Statement;
 import java.util.List;
 
@@ -30,8 +31,14 @@ public class db {
 		}
 		return value;
 	}
-	public static int insert(Connection con, Object obj) throws IllegalArgumentException, IllegalAccessException{
-		for (Annotation a:obj.getClass().getDeclaredAnnotations()){
+	public static Object getFieldValue(Object a){
+		if (a instanceof String) {
+			return "'"+a+"'";
+		}
+		return a;
+	}
+	public static int insert(Connection con, Object obj) throws IllegalArgumentException, IllegalAccessException, SQLException{
+		/*for (Annotation a:obj.getClass().getDeclaredAnnotations()){
 			System.out.printf("%n%s",getAnnotationValue(a));
 		}
 		for (Field f:obj.getClass().getDeclaredFields()){
@@ -40,8 +47,28 @@ public class db {
 			}
 			System.out.printf("%n%s", f.get(obj));
 			
+		}*/
+		Statement st = con.createStatement();
+		String tql = "INSERT INTO ";
+		tql+=obj.getClass().getAnnotation(Table.class).name()+"(";
+		for (Field f:obj.getClass().getDeclaredFields()){
+			for (Annotation a:f.getAnnotations()){
+				tql+=getAnnotationValue(a)+",";
+			}			
 		}
-		return 1;
+		tql = tql.substring(0,tql.length()-1)+") VALUES ("; //borrar la última coma "," y agregar un ") VALUES ("
+		for (Field f:obj.getClass().getDeclaredFields()){
+			tql+=getFieldValue(f.get(obj))+",";
+		}
+		tql = tql.substring(0,tql.length()-1)+")";
+		int result = 0;
+		try {
+			result = st.executeUpdate(tql);
+		}
+		catch (SQLIntegrityConstraintViolationException ex){
+			System.out.println("Dato duplicado (misma PK o mismo valor único), no se pudo añadir");
+		}
+		return result;
 	}
 	public static Class<?> find(Connection con,Class<?> obj,Class<?> index){
 		return null;
@@ -71,12 +98,12 @@ public class db {
 		}
 		
 		Department dep = new Department();
-		dep.deptId = 60;
-		dep.deptName = "ASD";
-		dep.deptNo = "HASDFAS";
-		dep.location = "ASDdf";
+		dep.deptId = 72;
+		dep.deptName = "Hola";
+		dep.deptNo = "test";
+		dep.location = "Hola";
 		int r = tortoise.db.insert(c,dep);		
-		
+		System.out.println(r);
 		/*
 		Statement stm = c.createStatement();
 		
