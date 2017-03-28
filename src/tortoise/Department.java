@@ -2,7 +2,7 @@ package tortoise;
 
 @Table(name="DEPARTMENT")
 public class Department {
-	@Id()
+	//@Id()
 	@Column(name="DEPT_ID")
 	int deptId;
 	@Column(name="DEPT_NAME")
