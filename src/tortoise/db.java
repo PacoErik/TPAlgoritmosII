@@ -17,14 +17,28 @@ import sun.reflect.annotation.AnnotationParser;
 import java.lang.reflect.Method;
 
 public class db {
-	public static int insert(Connection con, Object obj){
-		for (Annotation a:obj.getClass().getAnnotations()){
-			System.out.printf("%n%s",a);
+	public static String getAnnotationValue(Annotation a){
+		String value = "";
+		if(a instanceof Table){
+		    value = ((Table) a).name();
+		}
+		else if (a instanceof Id) {
+			
+		}
+		else if (a instanceof Column) {
+			value = ((Column) a).name();
+		}
+		return value;
+	}
+	public static int insert(Connection con, Object obj) throws IllegalArgumentException, IllegalAccessException{
+		for (Annotation a:obj.getClass().getDeclaredAnnotations()){
+			System.out.printf("%n%s",getAnnotationValue(a));
 		}
 		for (Field f:obj.getClass().getDeclaredFields()){
 			for (Annotation a:f.getAnnotations()){
-				System.out.printf("%n%s %s",f.getName(),a);
+				System.out.printf("%n%s %s",f.getName(),getAnnotationValue(a));
 			}
+			System.out.printf("%n%s", f.get(obj));
 			
 		}
 		return 1;
@@ -42,8 +56,7 @@ public class db {
 		return 1;
 	}
 	
-	
-	public static void main(String[] args) throws SQLException, ClassNotFoundException{
+	public static void main(String[] args) throws SQLException, ClassNotFoundException, IllegalArgumentException, IllegalAccessException{
 		PreparedStatement pstm = null;
 		ResultSet rs = null;
 		Connection c = null;
