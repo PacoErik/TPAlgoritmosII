@@ -1,4 +1,4 @@
-package tortoise;
+package tp;
 
 import java.sql.DriverManager;
 import java.lang.annotation.Annotation;
@@ -9,7 +9,7 @@ import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Statement;
 import java.util.List;
 
-public class db {
+public class Utn {
 	public static String getAnnotationValue(Annotation a){
 		String value = "";
 		if(a instanceof Table){
@@ -78,11 +78,11 @@ public class db {
 		}
 		
 		Department dep = new Department();
-		dep.deptId = 74;
+		dep.deptId = 75;
 		dep.deptName = "Hola";
-		dep.deptNo = "ohmygod";
+		dep.deptNo = "gg";
 		dep.location = "Hola";
-		int r = tortoise.db.insert(c,dep);		
+		int r = tp.Utn.insert(c,dep);		
 		System.out.println(r);
 	}
 }

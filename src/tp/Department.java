@@ -1,4 +1,4 @@
-package tortoise;
+package tp;
 
 @Table(name="DEPARTMENT")
 public class Department {
