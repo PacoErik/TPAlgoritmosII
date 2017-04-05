@@ -25,14 +25,18 @@ public class Main
 		}
 		*/
 		
-		Connection c = UtnConnectionFactory.getConnection();
+//		Connection c = UtnConnectionFactory.getConnection();
+//		
+//		Direccion dir = new Direccion();
+//		dir.setCalle("Calle1");
+//		dir.setNumero(1);
+//		int r = Utn.insert(c,dir);		
+//		System.out.println(r);
 		
-		Dept dep = new Dept();
-		dep.setDeptno(74);
-		dep.setDname("Hola");
-		dep.setLoc("Hola");
-		int r = Utn.insert(c,dep);		
-		System.out.println(r);
+		System.out.println(Utn._query(Direccion.class, ""));
+		System.out.println(Utn._query(Persona.class, ""));
+		System.out.println(Utn._query(TipoOcupacion.class, ""));
+		System.out.println(Utn._query(Ocupacion.class, ""));
 
 	}
 }

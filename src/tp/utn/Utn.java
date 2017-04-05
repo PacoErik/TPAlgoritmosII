@@ -16,104 +16,98 @@ import tp.utn.ann.Table;
 
 public class Utn
 {
-	private static String getAnnotationValue(Annotation a){
-		String value = "";
-		if(a instanceof Table){
-		    value = ((Table) a).name();
-		}
-		else if (a instanceof Id) {
-			
-		}
-		else if (a instanceof Column) {
-			value = ((Column) a).name();
-		}
-		return value;
-	}
-	
-	private static Object getFieldValue(Object a){
-		if (a instanceof String) {
-			return "'"+a+"'";
-		}
-		return a;
-	}
-
-	private static <T> List<T> parseResultSet(ResultSet rs, Class<T> class_type)
-			throws SQLException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException
+	private static <T> String getColumns(Class<T> dtoClass, String alias, Join join)
 	{
-		List<T> ret=new ArrayList<T>();
-
-		while(rs.next())
+		String q="";
+		for(Field f:dtoClass.getDeclaredFields())
 		{
-			T obj=class_type.getConstructor().newInstance();
-
-			for(Field f:class_type.getFields())
-			{
-				if(f.isAnnotationPresent(Column.class))
-				{
-					Column c=f.getAnnotation(Column.class);
-					f.set(obj,rs.getObject(c.name()));
-				}
-			}
-
-			ret.add(obj);
-		}
-		return ret;
-	}
-	
-	private static <T> String getColumns(Class<T> class_type, Boolean includeIdentity)
-	{
-		String ret="";
-		for(Field f:class_type.getFields())
-		{
-			if(f.isAnnotationPresent(Id.class))
-			{
-				Id i=f.getAnnotation(Id.class);
-
-				if(!includeIdentity && (i.strategy()==Id.IDENTITY)) continue;
-			}
-
 			if(f.isAnnotationPresent(Column.class))
 			{
 				Column c=f.getAnnotation(Column.class);
-				ret=c.name()+",";
+				q+=alias+"."+c.name()+",";
+
+				if(f.isAnnotationPresent(Id.class))
+				{
+					Id i=f.getAnnotation(Id.class);
+					join.setField(alias+"."+c.name());
+				}
+
+				if(c.fetchType()==Column.EAGER) q+=getJoin((Class)f.getGenericType(),alias+"."+c.name(),join);
 			}
 		}
-		
-		ret.replaceFirst(".$","");
-
-		return ret;
+		return q;
 	}
-	
-	// Retorna: el SQL correspondiente a la clase dtoClass acotado por xql
-	private static <T> String _query(Class<T> dtoClass, String xql)
+
+	private static <T> String getJoin(Class<T> dtoClass, String field, Join join)
 	{
-		String q = "";
+		String ret="";
 
 		if(dtoClass.isAnnotationPresent(Table.class))
 		{
-			q = "SELECT " + getColumns(dtoClass,false);
+			Table a=dtoClass.getAnnotation(Table.class);
 
-			Table a = dtoClass.getAnnotation(Table.class);
-			q = q + " FROM " + a.name();
+			String alias=a.name();
+
+			if(!a.alias().isEmpty()) alias=a.alias();
+
+			join.setS(join.getS()+" INNER JOIN "+a.name());
+
+			if(!a.alias().isEmpty()) join.setS(join.getS()+" AS "+a.alias());
+			else join.setS(join.getS()+" AS "+a.name());
+
+			join.setS(join.getS()+" ON "+field+"=");
+
+			Join otros_joins=new Join();
+
+			ret=getColumns(dtoClass,alias,otros_joins);
+
+			join.setS(join.getS()+otros_joins.getField()+otros_joins.getS());
+		}
+
+		return ret;
+	}
+
+	// Retorna: el SQL correspondiente a la clase dtoClass acotado por xql
+	public static <T> String _query(Class<T> dtoClass, String xql)
+	{
+		String q="";
+
+		if(dtoClass.isAnnotationPresent(Table.class))
+		{
+			Table a=dtoClass.getAnnotation(Table.class);
+
+			String alias=a.name();
+
+			if(!a.alias().isEmpty()) alias=a.alias();
+
+			Join joins=new Join();
+
+			q="SELECT "+getColumns(dtoClass,alias,joins);
+			q=q.replaceFirst(",$","");
+			q+=" FROM "+a.name();
+			q+=" AS "+alias;
+			q+=joins.getS();
+
+			if(!xql.isEmpty()) q+=" WHERE "+xql;
 		}
 
 		return q;
 	}
-	
+
 	// Invoca a: _query para obtener el SQL que se debe ejecutar
 	// Retorna: una lista de objetos de tipo T
 	public static <T> List<T> query(Connection con, Class<T> dtoClass, String xql, Object... args)
 	{
 		return null;
 	}
-	
+
 	// Retorna: una fila identificada por id o null si no existe
 	// Invoca a: query
 	private static <T> T find(Connection con, Class<T> dtoClass, Object id)
 	{
 		return null;
 	}
-	
+
 	// Retorna: una todasa las filas de la tabla representada por dtoClass
 	// Invoca a: query
 	private static <T> List<T> findAll(Connection con, Class<T> dtoClass)
@@ -126,7 +120,7 @@ public class Utn
 	{
 		return null;
 	}
-	
+
 	// Invoca a: _update para obtener el SQL que se debe ejecutar
 	// Retorna: la cantidad de filas afectadas luego de ejecutar el SQL
 	public static int update(Connection con, Class<?> dtoClass, String xql, Object... args)
@@ -134,20 +128,21 @@ public class Utn
 		return 0;
 	}
 
-	// Invoca a: update 
-	// Que hace?: actualiza todos los campos de la fila identificada por el id de dto
-	// Retorna: Cuantas filas resultaron modificadas (deberia: ser 1 o 0) 
+	// Invoca a: update
+	// Que hace?: actualiza todos los campos de la fila identificada por el id
+	// de dto
+	// Retorna: Cuantas filas resultaron modificadas (deberia: ser 1 o 0)
 	public static int update(Connection con, Object dto)
 	{
 		return 0;
 	}
-	
+
 	// Retorna: el SQL correspondiente a la clase dtoClass acotado por xql
 	public static String _delete(Class<?> dtoClass, String xql)
 	{
 		return null;
 	}
-	
+
 	// Invoca a: _delete para obtener el SQL que se debe ejecutar
 	// Retorna: la cantidad de filas afectadas luego de ejecutar el SQL
 	public static int delete(Connection con, Class<?> dtoClass, String xql, Object... args)
@@ -155,8 +150,9 @@ public class Utn
 		return 0;
 	}
 
-	// Retorna la cantidad de filas afectadas al eliminar la fila identificada por id
-    // (deberia ser: 1 o 0)
+	// Retorna la cantidad de filas afectadas al eliminar la fila identificada
+	// por id
+	// (deberia ser: 1 o 0)
 	// Invoca a: delete
 	public static int delete(Connection con, Class<?> dtoClass, Object id)
 	{
@@ -168,31 +164,11 @@ public class Utn
 	{
 		return null;
 	}
-	
+
 	// Invoca a: _insert para obtener el SQL que se debe ejecutar
 	// Retorna: la cantidad de filas afectadas luego de ejecutar el SQL
-	public static int insert(Connection con, Object dto) throws IllegalArgumentException, IllegalAccessException, SQLException
+	public static int insert(Connection con, Object dto) throws IllegalArgumentException,IllegalAccessException,SQLException
 	{
-		Statement st = con.createStatement();
-		String tql = "INSERT INTO ";
-		tql+=dto.getClass().getAnnotation(Table.class).name()+"(";
-		for (Field f:dto.getClass().getDeclaredFields()){
-			for (Annotation a:f.getAnnotations()){
-				tql+=getAnnotationValue(a)+",";
-			}			
-		}
-		tql = tql.replaceFirst(".$",") VALUES ("); //borrar la última coma y reemplazarlo por ") VALUES ("
-		for (Field f:dto.getClass().getDeclaredFields()){
-			tql+=getFieldValue(f.get(dto))+",";
-		}
-		tql = tql.replaceFirst(".$", ")");
-		int result = 0;
-		try {
-			result = st.executeUpdate(tql);
-		}
-		catch (SQLIntegrityConstraintViolationException ex){
-			System.out.println("Dato duplicado (misma PK o mismo valor único), no se pudo añadir");
-		}
-		return result;
+		return 0;
 	}
 }
