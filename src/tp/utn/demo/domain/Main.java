@@ -37,6 +37,6 @@ public class Main
 		System.out.println(Utn._query(Persona.class, ""));
 		System.out.println(Utn._query(TipoOcupacion.class, ""));
 		System.out.println(Utn._query(Ocupacion.class, ""));
-
+		System.out.println(Utn.parseXQL(Direccion.class,"$idDireccion LIKE ? ? ?","ola","ke","ase"));
 	}
 }
