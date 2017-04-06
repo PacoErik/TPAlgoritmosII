@@ -66,7 +66,30 @@ public class Utn
 
 		return ret;
 	}
-
+	
+	
+	
+	//Retorna la representación del comando XQL 
+	public static String parseXQL(Class<?> dtoClass,String xql, Object ... args)
+	{
+		xql = xql.replace("$","WHERE ");
+		for(Field f:dtoClass.getDeclaredFields())
+		{
+			if(f.isAnnotationPresent(Column.class))
+			{
+				Table a=dtoClass.getAnnotation(Table.class);
+				String alias=a.name();
+				Column c=f.getAnnotation(Column.class);
+				xql = xql.replace(f.getName(),alias+"."+c.name());
+			}
+		}
+		for (Object arg:args) {
+			xql = xql.replaceFirst("\\?",arg.toString());
+		}
+		
+		return xql;
+	}
+	
 	// Retorna: el SQL correspondiente a la clase dtoClass acotado por xql
 	public static <T> String _query(Class<T> dtoClass, String xql)
 	{
@@ -88,7 +111,7 @@ public class Utn
 			q+=" AS "+alias;
 			q+=joins.getS();
 
-			if(!xql.isEmpty()) q+=" WHERE "+xql;
+			if(!xql.isEmpty()) q+=" "+xql;
 		}
 
 		return q;
@@ -98,6 +121,10 @@ public class Utn
 	// Retorna: una lista de objetos de tipo T
 	public static <T> List<T> query(Connection con, Class<T> dtoClass, String xql, Object... args)
 	{
+		//Acá el query llama al parseXQL y se lo manda 
+		//todo (menos la conexión)
+		//y luego le pasa el XQL parseado al _query 
+		//para obtener el comando SQL a ejecutar
 		return null;
 	}
 
