@@ -1,4 +1,4 @@
-package tp.utn.demo.domain;
+package demo;
 
 import tp.utn.ann.Column;
 import tp.utn.ann.Id;

@@ -1,11 +1,9 @@
-package tp.utn.demo.domain;
+package demo;
 
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.SQLException;
 
 import tp.utn.Utn;
-import tp.utn.UtnConnectionFactory;
 
 public class Main
 {
@@ -24,19 +22,11 @@ public class Main
 			System.exit(0);
 		}
 		*/
-		
-//		Connection c = UtnConnectionFactory.getConnection();
-//		
-//		Direccion dir = new Direccion();
-//		dir.setCalle("Calle1");
-//		dir.setNumero(1);
-//		int r = Utn.insert(c,dir);		
-//		System.out.println(r);
-		
-		System.out.println(Utn._query(Direccion.class, ""));
-		System.out.println(Utn._query(Persona.class, ""));
+
 		System.out.println(Utn._query(TipoOcupacion.class, ""));
 		System.out.println(Utn._query(Ocupacion.class, ""));
-		System.out.println(Utn.parseXQL(Direccion.class,"$idDireccion LIKE ? ? ?","ola","ke","ase"));
+		System.out.println(Utn._query(Persona.class, "$direccion.calle = 'pep' AND $ocupacion.tipoocupacion.descripcion = '666'"));
+		System.out.println(Utn._query(Direccion.class, "$calle = 'pep'"));
+		System.out.println(Utn._query(Persona.class, "$calle = 'pep' AND $ocupacion.tipo_ocupacion.descripcion = '666'"));
 	}
 }
