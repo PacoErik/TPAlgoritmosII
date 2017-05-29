@@ -1,4 +1,4 @@
-package tp.utn.util;
+package utn.util;
 
 import java.util.List;
 
@@ -15,9 +15,8 @@ public class StringUtil {
         return replaceLast(ret, joiner);
     }
 
-    private static String replaceLast(String ret, String joiner) {
+    public static String replaceLast(String ret, String joiner) {
         return ret.substring(0, ret.lastIndexOf(joiner)) +
                 ret.substring(ret.lastIndexOf(joiner) + joiner.length());
     }
-
 }

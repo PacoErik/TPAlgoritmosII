@@ -1,11 +1,12 @@
 package demo;
 
+import utn.ann.Column;
+import utn.ann.Id;
+import utn.ann.Relation;
+import utn.ann.Table;
+
 import java.util.Collection;
 
-import tp.utn.ann.Column;
-import tp.utn.ann.Id;
-import tp.utn.ann.Relation;
-import tp.utn.ann.Table;
 @Table(name="direccion")
 public class Direccion
 {
@@ -19,7 +20,7 @@ public class Direccion
 	@Column(name="numero")
 	private int numero;
 	
-	@Relation(type=Persona.class,att="direccion")
+	@Relation(type= Persona.class,att="direccion")
 	private Collection<Persona> personas;
 
 	public Collection<Persona> getPersonas()

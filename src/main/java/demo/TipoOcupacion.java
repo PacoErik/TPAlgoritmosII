@@ -1,8 +1,8 @@
 package demo;
 
-import tp.utn.ann.Column;
-import tp.utn.ann.Id;
-import tp.utn.ann.Table;
+import utn.ann.Column;
+import utn.ann.Id;
+import utn.ann.Table;
 
 @Table(name="tipo_ocupacion")
 public class TipoOcupacion
