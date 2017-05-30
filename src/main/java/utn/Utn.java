@@ -1,11 +1,13 @@
 package utn;
 
+import org.mockito.cglib.proxy.Enhancer;
 import utn.domain.ClassField;
 import utn.domain.MappedClass;
 import utn.ann.Column;
 import utn.ann.Id;
 import utn.ann.Relation;
 import utn.ann.Table;
+import utn.domain.Relationship;
 import utn.exceptions.WrongParameterException;
 
 import java.lang.reflect.Field;
@@ -38,7 +40,7 @@ public class Utn
             String alias = "_" + a.name();
             if(a.alias().length() > 0) alias = a.alias();
 
-            MappedClass m = new MappedClass(className, a.name(), alias);
+            MappedClass m = new MappedClass(dtoClass, a.name(), alias);
 
             domain.put(className, m);
 
@@ -57,42 +59,52 @@ public class Utn
 
 				if (f.isAnnotationPresent(Id.class)) {
 					Id i = f.getAnnotation(Id.class);
-					m.addIndexField(f.getName(), c.name(), i.strategy(), (Class)f.getGenericType());
+					m.addIndexField(f, c.name(), c.fetchType(), i.strategy() == Id.IDENTITY);
 				}
 				else {
-					ClassField classField = m.addClassField(f.getName(), c.name(), (Class)f.getGenericType());
-                    MappedClass joinMappedClass = getMappedClass((Class) f.getGenericType());
-					if (joinMappedClass != null) classField.setJoinMappedClass(joinMappedClass);
+					if (c.fetchType() == Column.EAGER) {
+						ClassField classField = m.addClassField(f, c.name(), c.fetchType());
+						MappedClass joinMappedClass = getMappedClass((Class) f.getGenericType());
+						if (joinMappedClass != null) classField.setJoinMappedClass(joinMappedClass);
+					}
+					else {
+						MappedClass relationship = getMappedClass((Class) f.getGenericType());
+						m.addRelationship(relationship, f, Column.LAZY, c.name());
+					}
 				}
             }
 
             if(f.isAnnotationPresent(Relation.class)) {
 				Relation r = f.getAnnotation(Relation.class);
             	MappedClass relationship = getMappedClass(r.type());
-            	m.addRelationship(relationship, Column.LAZY);
+            	m.addRelationship(relationship, f, Column.LAZY, r.att());
 			}
         }
     }
 
-	private static <T> List<T> parseResultSet(ResultSet rs, Class<T> dtoClass)
-			throws SQLException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, InvocationTargetException {
+    private static <T> T parseResult(ResultSet rs, Class<T> dtoClass) throws SQLException, IllegalAccessException {
+		T obj = (T)getMappedClass(dtoClass).create();
+
+		for(ClassField c : getMappedClass(dtoClass).getClassFields()) {
+			if (c.getFetchType() != Column.LAZY) {
+				if (c.getJoinMappedClass() != null) {
+					parseResult(rs, c.getJoinMappedClass().getMappedClass());
+				} else {
+					c.getField().setAccessible(true);
+					c.getField().set(obj, rs.getObject(c.getDatabaseName()));
+				}
+			}
+		}
+
+		return obj;
+	}
+
+	private static <T> List<T> parseResultSet(ResultSet rs, Class<T> dtoClass) throws SQLException, IllegalAccessException {
 		List<T> ret=new ArrayList<T>();
 
 		while(rs.next())
 		{
-			T obj=dtoClass.getConstructor().newInstance();
-
-			for(Field f:dtoClass.getDeclaredFields())
-			{
-				if(f.isAnnotationPresent(Column.class))
-				{
-					Column c=f.getAnnotation(Column.class);
-					f.setAccessible(true);
-					f.set(obj,rs.getObject(c.name()));
-				}
-			}
-
-			ret.add(obj);
+			ret.add(parseResult(rs, dtoClass));
 		}
 		return ret;
 	}

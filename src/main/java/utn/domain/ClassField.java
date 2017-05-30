@@ -2,6 +2,7 @@ package utn.domain;
 
 import utn.ann.Column;
 
+import java.io.File;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,34 +18,43 @@ public class ClassField {
         return ret;
     }
 
-    private String className;
+    private Field field;
     private String databaseName;
-    private Class dataType;
     private MappedClass joinMappedClass;
     private int fetchType = Column.EAGER;
 
-    public ClassField(String className, String databaseName, Class genericType) {
-        this.className = className;
+    public ClassField(Field field, String databaseName, int fetchType) {
         this.databaseName = databaseName;
-        this.dataType = genericType;
+        this.field = field;
+        this.fetchType = fetchType;
     }
 
-    public String getClassName() { return className; }
-
-    public String getDatabaseName() { return databaseName; }
-
-    public MappedClass getJoinMappedClass() {
-        return joinMappedClass;
+    public Field getField() {
+        return field;
     }
 
-    public void setJoinMappedClass(MappedClass joinMappedClass) { this.joinMappedClass = joinMappedClass; }
+    public String getClassName() {
+        return field.getName();
+    }
+
+    public String getDatabaseName() {
+        return databaseName;
+    }
 
     public int getFetchType() {
         return fetchType;
     }
 
-    public void setFetchType(int fetchType) {
-        this.fetchType = fetchType;
+    public Class getDataType() {
+        return (Class) field.getGenericType();
+    }
+
+    public MappedClass getJoinMappedClass() {
+        return joinMappedClass;
+    }
+
+    public void setJoinMappedClass(MappedClass joinMappedClass) {
+        this.joinMappedClass = joinMappedClass;
     }
 
     protected List<String> getClassFields(String alias) {
@@ -75,7 +85,7 @@ public class ClassField {
 
     protected String getXql(String superClassName, String alias, String xql) {
 
-        String parameter = "\\$" + className + " ";
+        String parameter = "\\$" + getClassName() + " ";
 
         if (superClassName != null) {
             if (joinMappedClass != null) {
@@ -83,20 +93,12 @@ public class ClassField {
                 xql = joinMappedClass.getXql(superClassNext, xql);
             }
 
-            parameter = "\\$" + superClassName + className + " ";
+            parameter = "\\$" + superClassName + getClassName() + " ";
 
             return xql.toLowerCase().replaceAll(parameter.toLowerCase(), alias + "." + databaseName + " ");
         }
 
         return xql.toLowerCase().replaceAll(parameter.toLowerCase(), databaseName + " ");
-    }
-
-    public Class getDataType() {
-        return dataType;
-    }
-
-    public void setDataType(Class dataType) {
-        this.dataType = dataType;
     }
 
     protected String valueFormat() {
@@ -106,9 +108,11 @@ public class ClassField {
     }
 
     public String replaceNamedParameter(String query, Object dto) throws NoSuchFieldException, IllegalAccessException {
-        Field field = dto.getClass().getDeclaredField(getClassName());
+        if (joinMappedClass != null) {
+            joinMappedClass.getIndexField().getField().setAccessible(true);
+            return query.replace(String.format(":%s", getDatabaseName()), String.format(valueFormat(), joinMappedClass.getIndexField().getField().get(field.get(dto))));
+        }
         field.setAccessible(true);
-        return query.replace(String.format(":%s", getDatabaseName()),
-            String.format(valueFormat(), field.get(dto)));
+        return query.replace(String.format(":%s", getDatabaseName()), String.format(valueFormat(), field.get(dto)));
     }
 }

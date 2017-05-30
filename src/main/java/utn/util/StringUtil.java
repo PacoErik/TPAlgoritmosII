@@ -19,4 +19,8 @@ public class StringUtil {
         return ret.substring(0, ret.lastIndexOf(joiner)) +
                 ret.substring(ret.lastIndexOf(joiner) + joiner.length());
     }
+
+    public static String getGetterName(String fieldName) {
+        return "get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
+    }
 }

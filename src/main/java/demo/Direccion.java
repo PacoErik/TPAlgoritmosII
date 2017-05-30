@@ -20,7 +20,7 @@ public class Direccion
 	@Column(name="numero")
 	private int numero;
 	
-	@Relation(type= Persona.class,att="direccion")
+	@Relation(type= Persona.class, att="Direccion")
 	private Collection<Persona> personas;
 
 	public Collection<Persona> getPersonas()

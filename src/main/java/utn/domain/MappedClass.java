@@ -1,22 +1,29 @@
 package utn.domain;
 
+import org.mockito.cglib.proxy.Enhancer;
 import utn.ann.Id;
 import utn.exceptions.WrongParameterException;
 import utn.util.StringUtil;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MappedClass
 {
-    private String className;
     private String databaseName;
     private String alias;
+    private Enhancer enhancer;
+    private Class mappedClass;
 
-	public MappedClass(String className, String databaseName, String alias) {
-	    this.className = className;
+	public MappedClass(Class mappedClass, String databaseName, String alias) {
+	    this.mappedClass = mappedClass;
 	    this.databaseName = databaseName;
 	    this.alias = alias;
+
+	    enhancer = new Enhancer();
+	    enhancer.setSuperclass(mappedClass);
+	    enhancer.setCallback(new LazyInterceptor(this));
 	}
 
     private IndexField indexField;
@@ -24,19 +31,23 @@ public class MappedClass
 	private List<ClassField> classFields = new ArrayList<ClassField>();
     private List<Relationship> relationships = new ArrayList<Relationship>();
 
-    public ClassField addClassField(String className, String databaseName, Class genericType){
-        ClassField n = new ClassField(className, databaseName, genericType);
+    public Object create() {
+        return enhancer.create();
+    }
+
+    public ClassField addClassField(Field field, String databaseName, int fetchType){
+        ClassField n = new ClassField(field, databaseName, fetchType);
         getClassFields().add(n);
         return n;
     }
 
-    public void addIndexField(String className, String databaseName, int fetchType, Class genericType){
-        indexField = new IndexField(className, databaseName, fetchType, genericType);
+    public void addIndexField(Field field, String databaseName, int fetchType, boolean identity){
+        indexField = new IndexField(field, databaseName, fetchType, identity);
         getClassFields().add(indexField);
     }
 
-    public void addRelationship(MappedClass destiny, int fetchType){
-        relationships.add(new Relationship(destiny, fetchType));
+    public void addRelationship(MappedClass destiny, Field field, int fetchType, String attribute){
+        relationships.add(new Relationship(destiny, field, fetchType, attribute));
     }
 
     public IndexField getIndexField() {
@@ -58,8 +69,7 @@ public class MappedClass
     protected List<String> getDatabaseFiledsName () {
         List<String> ret = new ArrayList<String>();
         for (ClassField c : getClassFields()) {
-            if ((c.getDatabaseName() != getIndexField().getDatabaseName()) &&
-               (getIndexField().getFetchType() != Id.IDENTITY))
+            if (!((c.getDatabaseName() == getIndexField().getDatabaseName()) && (getIndexField().getIdentity())))
                 ret.add(c.getDatabaseName());
         }
         return ret;
@@ -141,7 +151,9 @@ public class MappedClass
         return q;
     }
 
-    protected String getClassName() { return className; }
+    protected String getClassName() { return mappedClass.getSimpleName(); }
+
+    public Class getMappedClass() { return mappedClass; }
 
     protected String getDatabaseName() {
         return databaseName;

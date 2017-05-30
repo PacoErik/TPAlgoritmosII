@@ -1,6 +1,10 @@
 package utn.domain;
 
 import utn.ann.Column;
+import utn.exceptions.WrongParameterException;
+import utn.util.StringUtil;
+
+import java.lang.reflect.Field;
 
 /**
  * Created by TATIANA on 23/4/2017.
@@ -8,17 +12,33 @@ import utn.ann.Column;
 public class Relationship {
     private MappedClass mappedClass; //La mappedClass destino siempre se joinea por id
     private int fetchType = Column.EAGER;
+    private String attribute;
+    private Field field;
 
-    public Relationship(MappedClass mappedClass, int fetchType) {
+    public Relationship(MappedClass mappedClass, Field field, int fetchType, String attribute) {
         this.mappedClass = mappedClass;
         this.fetchType = fetchType;
+        this.attribute = attribute;
+        this.field = field;
     }
+
+    public String getSelect() throws WrongParameterException {
+        return this.mappedClass.getSelect("$" + attribute + " = ?");
+    }
+
+    public String getClassName() { return field.getName(); }
+
+    public String getGetterClassName() { return StringUtil.getGetterName(field.getName()); }
 
     public MappedClass getMappedClass() {
         return mappedClass;
     }
 
-    public int getFetchType() {
-        return fetchType;
+    public String getAttribute() {
+        return attribute;
+    }
+
+    public Field getField() {
+        return field;
     }
 }

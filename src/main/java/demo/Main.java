@@ -12,11 +12,10 @@ public class Main
 {
 
 	public static void main(String[] args) throws IOException, SQLException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException, NoSuchFieldException, ClassNotFoundException {
-		TipoOcupacion t = new TipoOcupacion();
-		t.setIdTipoOcupacion(0);
-		t.setDescripcion("Profesional");
-		Utn.update(UtnConnectionFactory.getConnection(), t, "$idTipoOcupacion = ?", 0);
-		System.out.println(Utn.findAll(UtnConnectionFactory.getConnection(), TipoOcupacion.class));
+		Direccion d = Utn.find(UtnConnectionFactory.getConnection(), Direccion.class, 0);
+
+		System.out.println(d.getPersonas());
+
 		//System.out.println(Utn._delete(Ocupacion.class, "$descripcion = 'Pepe'"));
 		//System.out.println(Utn._update(Persona.class, ""));
 		//System.out.println(Utn._query(Persona.class, "$direccion.calle = 'pep' AND $ocupacion.tipoocupacion.descripcion = '666'"));
