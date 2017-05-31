@@ -85,14 +85,17 @@ public class Utn
     private static <T> T parseResult(ResultSet rs, Class<T> dtoClass) throws SQLException, IllegalAccessException {
 		T obj = (T)getMappedClass(dtoClass).create();
 
+		Object value = null;
+
 		for(ClassField c : getMappedClass(dtoClass).getClassFields()) {
 			if (c.getFetchType() != Column.LAZY) {
 				if (c.getJoinMappedClass() != null) {
-					parseResult(rs, c.getJoinMappedClass().getMappedClass());
+					value = parseResult(rs, c.getJoinMappedClass().getMappedClass());
 				} else {
-					c.getField().setAccessible(true);
-					c.getField().set(obj, rs.getObject(c.getDatabaseName()));
+					value = rs.getObject(c.getDatabaseName());
 				}
+				c.getField().setAccessible(true);
+				c.getField().set(obj, value);
 			}
 		}
 

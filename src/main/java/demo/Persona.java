@@ -63,7 +63,7 @@ public class Persona
 	@Override
 	public String toString()
 	{
-		return "Persona [idPersona="+idPersona+", nombre="+nombre+", direccion="+direccion+", ocupacion="+ocupacion+"]";
+		return "Persona [idPersona="+idPersona+", nombre="+nombre+", direccion="+getDireccion().toString()+", ocupacion="+getOcupacion().toString()+"]";
 	}
 	
 	@Override
