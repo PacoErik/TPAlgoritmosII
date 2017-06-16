@@ -20,6 +20,20 @@ public class Persona
 	@Column(name="id_ocupacion")
 	public Ocupacion ocupacion;
 
+	public Persona() {
+
+	}
+
+	private Persona(String nombre, Direccion direccion, Ocupacion ocupacion) {
+		this.setNombre(nombre);
+		this.setDireccion(direccion);
+		this.setOcupacion(ocupacion);
+	}
+
+	public static Persona create(String nombre, Direccion direccion, Ocupacion ocupacion) {
+		return new Persona(nombre, direccion, ocupacion);
+	}
+
 	public Integer getIdPersona()
 	{
 		return idPersona;

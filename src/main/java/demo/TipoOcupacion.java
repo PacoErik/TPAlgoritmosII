@@ -13,6 +13,17 @@ public class TipoOcupacion
 
 	@Column(name="descripcion")
 	private String descripcion;
+
+	public TipoOcupacion() {
+	}
+
+	private TipoOcupacion(String descripcion) {
+		this.setDescripcion(descripcion);
+	}
+
+	public static TipoOcupacion create(String descripcion) {
+		return new TipoOcupacion(descripcion);
+	}
 	
 	public Integer getIdTipoOcupacion()
 	{

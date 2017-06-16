@@ -1,7 +1,6 @@
 package utn.domain;
 
 import org.mockito.cglib.proxy.Enhancer;
-import utn.ann.Id;
 import utn.exceptions.WrongParameterException;
 import utn.util.StringUtil;
 
@@ -133,17 +132,10 @@ public class MappedClass
 
     public String getUpdate(String xql) throws WrongParameterException {
         String q = "";
-        q = "UPDATE " + getDatabaseName() + " SET ";
-
-        for (ClassField c : getClassFields()) {
-            if (c.getDatabaseName() != getIndexField().getDatabaseName())
-                q += String.format("%s = :%s, ", c.getDatabaseName(), c.getDatabaseName());
-        }
-
-        q = StringUtil.replaceLast(q, ", ");
+        q = "UPDATE " + getDatabaseName() + " ";
 
         if(xql.length() > 0) {
-            q += " WHERE " + getXql(null, xql);
+            q += getXql(null, xql);
 
             if (q.contains(" $")) throw new WrongParameterException();
         }

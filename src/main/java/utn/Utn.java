@@ -1,14 +1,13 @@
 package utn;
 
-import org.mockito.cglib.proxy.Enhancer;
 import utn.domain.ClassField;
 import utn.domain.MappedClass;
 import utn.ann.Column;
 import utn.ann.Id;
 import utn.ann.Relation;
 import utn.ann.Table;
-import utn.domain.Relationship;
 import utn.exceptions.WrongParameterException;
+import utn.util.StringUtil;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -29,7 +28,19 @@ public class Utn
 		System.out.println(q);
 	}
 
+	private static <T> Class getSimplyClass(Class<T> dtoClass) {
+		if (dtoClass.getSimpleName().contains("Enhancer"))
+			dtoClass = (Class<T>) dtoClass.getSuperclass();
+
+		return dtoClass;
+	}
+
+	private static Class getSimpleClassFromObject(Object dto) {
+		return getSimplyClass(dto.getClass());
+	}
+
 	private static <T> MappedClass getMappedClass(Class<T> dtoClass) {
+		dtoClass = getSimplyClass(dtoClass);
     	String className = dtoClass.getSimpleName();
 
         if (domain.containsKey(className))
@@ -82,7 +93,7 @@ public class Utn
         }
     }
 
-    private static <T> T parseResult(ResultSet rs, Class<T> dtoClass) throws SQLException, IllegalAccessException {
+    private static <T> T parseResult(ResultSet rs, Class<T> dtoClass) throws SQLException, IllegalAccessException, NoSuchMethodException, InstantiationException, InvocationTargetException {
 		T obj = (T)getMappedClass(dtoClass).create();
 
 		Object value = null;
@@ -102,7 +113,7 @@ public class Utn
 		return obj;
 	}
 
-	private static <T> List<T> parseResultSet(ResultSet rs, Class<T> dtoClass) throws SQLException, IllegalAccessException {
+	private static <T> List<T> parseResultSet(ResultSet rs, Class<T> dtoClass) throws SQLException, IllegalAccessException, NoSuchMethodException, InvocationTargetException, InstantiationException {
 		List<T> ret=new ArrayList<T>();
 
 		while(rs.next())
@@ -163,12 +174,8 @@ public class Utn
 
 	// Invoca a: _update para obtener el SQL que se debe ejecutar
 	// Retorna: la cantidad de filas afectadas luego de ejecutar el SQL
-	public static int update(Connection con, Object dto, String xql, Object... args) throws SQLException, NoSuchFieldException, IllegalAccessException {
-		String q = _update(dto.getClass(), xql);
-
-		for (ClassField c : getMappedClass(dto.getClass()).getClassFields()){
-			q = c.replaceNamedParameter(q, dto);
-		}
+	public static <T> int update(Connection con, Class<T> dtoClass, String xql, Object... args) throws SQLException, NoSuchFieldException, IllegalAccessException {
+		String q = _update(dtoClass, xql);
 
 		PreparedStatement s = con.prepareStatement(q);
 		int i = 1;
@@ -187,10 +194,18 @@ public class Utn
 	public static int update(Connection con, Object dto) throws NoSuchFieldException, IllegalAccessException, SQLException, ClassNotFoundException {
 		String nombreId = getMappedClass(dto.getClass()).getIndexField().getClassName();
 
-		Field fieldId = dto.getClass().getDeclaredField(nombreId);
+		Field fieldId = getSimpleClassFromObject(dto).getDeclaredField(nombreId);
 		fieldId.setAccessible(true);
 
-		String q = _update(dto.getClass(), String.format("$%s = %s", nombreId, fieldId.get(dto)));
+		String xql = " SET ";
+		for (ClassField c : getMappedClass(dto.getClass()).getClassFields()) {
+			if (c.getDatabaseName() != getMappedClass(dto.getClass()).getIndexField().getDatabaseName())
+				xql += String.format("%s = :%s, ", c.getDatabaseName(), c.getDatabaseName());
+		}
+
+		xql = StringUtil.replaceLast(xql, ", ") + " WHERE " + String.format("$%s = %s", nombreId, fieldId.get(dto));
+
+		String q = _update(dto.getClass(), xql);
 
 		for (ClassField c : getMappedClass(dto.getClass()).getClassFields()){
 			q = c.replaceNamedParameter(q, dto);
@@ -249,5 +264,10 @@ public class Utn
 		PreparedStatement s = con.prepareStatement(q);
 		logQuery(s.toString());
 		return s.executeUpdate();
+	}
+	public static void command(Connection con, String sql) throws SQLException {
+		PreparedStatement s = con.prepareStatement(sql);
+		logQuery(s.toString());
+		s.executeUpdate();
 	}
 }

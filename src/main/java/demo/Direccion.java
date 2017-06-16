@@ -19,6 +19,18 @@ public class Direccion
 
 	@Column(name="numero")
 	private int numero;
+
+	public Direccion() {
+
+	}
+	private Direccion(String calle, int numero) {
+		this.setCalle(calle);
+		this.setNumero(numero);
+	}
+
+	public static Direccion create(String calle, int numero) {
+		return new Direccion(calle, numero);
+	}
 	
 	@Relation(type= Persona.class, att="Direccion")
 	private Collection<Persona> personas;

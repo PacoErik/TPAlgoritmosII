@@ -16,6 +16,18 @@ public class Ocupacion
 	
 	@Column(name="id_tipoocupacion")
 	public TipoOcupacion tipoOcupacion;
+
+	public Ocupacion() {
+
+	}
+	private Ocupacion(String descripcion, TipoOcupacion tipoOcupacion) {
+		this.setDescripcion(descripcion);
+		this.setTipoOcupacion(tipoOcupacion);
+	}
+
+	public static Ocupacion create(String descripcion, TipoOcupacion tipoOcupacion) {
+		return new Ocupacion(descripcion, tipoOcupacion);
+	}
 	
 	public Integer getIdOcupacion()
 	{
