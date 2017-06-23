@@ -60,12 +60,12 @@ public class ClassField {
     protected List<String> getClassFields(String alias) {
         List<String> ret = new ArrayList<String>();
         if (alias != null)
-            ret.add(alias + "." + databaseName);
+            ret.add(alias + "." + databaseName + " AS " + alias + "_" + databaseName);
         else
             ret.add(databaseName);
 
         if (joinMappedClass != null)
-            ret.addAll(joinMappedClass.getDatabaseFiledsName());
+            ret.addAll(joinMappedClass.getDatabaseFiledsNameJoin());
 
         return ret;
     }

@@ -60,7 +60,7 @@ public class MappedClass
     protected List<String> getDatabaseFiledsNameJoin () {
         List<String> ret = new ArrayList<String>();
         for (ClassField c : getClassFields()) {
-                ret.addAll(c.getClassFields(null));
+                ret.addAll(c.getClassFields(getAlias()));
         }
         return ret;
     }
@@ -147,11 +147,11 @@ public class MappedClass
 
     public Class getMappedClass() { return mappedClass; }
 
-    protected String getDatabaseName() {
+    public String getDatabaseName() {
         return databaseName;
     }
 
-    protected String getAlias() {
+    public String getAlias() {
         return alias;
     }
 

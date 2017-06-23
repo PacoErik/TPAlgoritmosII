@@ -2,6 +2,7 @@ package demo;
 
 import utn.Utn;
 import utn.UtnConnectionFactory;
+import demo.domain.*;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;

@@ -1,4 +1,4 @@
-package demo;
+package demo.domain;
 
 import utn.ann.Column;
 import utn.ann.Id;
@@ -32,7 +32,7 @@ public class Direccion
 		return new Direccion(calle, numero);
 	}
 	
-	@Relation(type= Persona.class, att="Direccion")
+	@Relation(type= Persona.class, att="id_direccion")
 	private Collection<Persona> personas;
 
 	public Collection<Persona> getPersonas()

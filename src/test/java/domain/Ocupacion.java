@@ -1,7 +1,10 @@
-package demo;
+package domain;
+
+import java.util.List;
 
 import utn.ann.Column;
 import utn.ann.Id;
+import utn.ann.Relation;
 import utn.ann.Table;
 
 @Table(name="ocupacion")
@@ -17,18 +20,19 @@ public class Ocupacion
 	@Column(name="id_tipoocupacion")
 	public TipoOcupacion tipoOcupacion;
 
-	public Ocupacion() {
-
-	}
-	private Ocupacion(String descripcion, TipoOcupacion tipoOcupacion) {
-		this.setDescripcion(descripcion);
-		this.setTipoOcupacion(tipoOcupacion);
-	}
-
-	public static Ocupacion create(String descripcion, TipoOcupacion tipoOcupacion) {
-		return new Ocupacion(descripcion, tipoOcupacion);
-	}
+	@Relation(type=Persona.class, att="id_ocupacion")
+	public List<Persona> personas;
 	
+	public List<Persona> getPersonas()
+	{
+		return personas;
+	}
+
+	public void setPersonas(List<Persona> personas)
+	{
+		this.personas=personas;
+	}
+
 	public Integer getIdOcupacion()
 	{
 		return idOcupacion;
@@ -69,19 +73,8 @@ public class Ocupacion
 	public boolean equals(Object o)
 	{
 		Ocupacion other = (Ocupacion)o;
-		boolean ok = true;
-		ok = ok && idOcupacion==other.getIdOcupacion();
-		ok = ok && descripcion.equals(other.getDescripcion());
-		
-		if( tipoOcupacion!=null )
-		{
-			ok = ok && tipoOcupacion.getIdTipoOcupacion()==other.getTipoOcupacion().getIdTipoOcupacion();
-		}
-		else
-		{
-			ok = ok && other.getTipoOcupacion()==null;
-		}
-		
-		return ok;
+		return other.getIdOcupacion().equals(idOcupacion)
+			&& other.getDescripcion().equals(getDescripcion())
+			&& other.getTipoOcupacion().equals(getTipoOcupacion());
 	}	
 }

@@ -10,8 +10,11 @@ import java.lang.reflect.Field;
  * Created by TATIANA on 23/4/2017.
  */
 public class Relationship {
+    public static int RELATION = 1;
+    public static int LAZY_COLUMN = 2;
+
     private MappedClass mappedClass; //La mappedClass destino siempre se joinea por id
-    private int fetchType = Column.EAGER;
+    private int fetchType = RELATION;
     private String attribute;
     private Field field;
 
@@ -38,7 +41,7 @@ public class Relationship {
         return attribute;
     }
 
-    public Field getField() {
-        return field;
-    }
+    public Field getField() { return field; }
+
+    public int getFetchType() { return fetchType; }
 }

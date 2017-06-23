@@ -1,6 +1,5 @@
 package utn.domain;
 
-import org.mockito.cglib.proxy.InvocationHandler;
 import org.mockito.cglib.proxy.MethodInterceptor;
 import org.mockito.cglib.proxy.MethodProxy;
 import utn.Utn;
@@ -25,11 +24,17 @@ public class LazyInterceptor implements MethodInterceptor {
             if (method.getName().equals(r.getGetterClassName())) {
                 r.getField().setAccessible(true);
                 if (r.getField().get(o) == null) {
-                    r.getField().set(o, Utn.query(UtnConnectionFactory.getConnection(),
-                            r.getMappedClass().getMappedClass(), "$" + r.getAttribute() + " = ?",
-                            mappedClass.getIndexField().getField().get(o)));
-                }
+                    String xql = r.getMappedClass().getAlias() + "." + r.getAttribute();
 
+                    if (r.getFetchType() == Relationship.RELATION)
+                        r.getField().set(o, Utn.query(UtnConnectionFactory.getConnection(),
+                                r.getMappedClass().getMappedClass(), xql,
+                                mappedClass.getIndexField().getField().get(o)));
+                    else
+                        r.getField().set(o, Utn.query(UtnConnectionFactory.getConnection(),
+                                r.getMappedClass().getMappedClass(), xql,
+                                mappedClass.getIndexField().getField().get(o)).get(0));
+                }
                 return r.getField().get(o);
             }
         }

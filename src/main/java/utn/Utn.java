@@ -6,6 +6,7 @@ import utn.ann.Column;
 import utn.ann.Id;
 import utn.ann.Relation;
 import utn.ann.Table;
+import utn.domain.Relationship;
 import utn.exceptions.WrongParameterException;
 import utn.util.StringUtil;
 
@@ -80,7 +81,11 @@ public class Utn
 					}
 					else {
 						MappedClass relationship = getMappedClass((Class) f.getGenericType());
-						m.addRelationship(relationship, f, Column.LAZY, c.name());
+						m.addRelationship(relationship, f, Relationship.LAZY_COLUMN,
+								relationship.getIndexField().getDatabaseName() +
+								" = (SELECT " + m.getAlias() + "." + c.name() + " FROM " + m.getDatabaseName() +
+								" AS " + m.getAlias() + " WHERE " +  m.getAlias() + "." +
+								m.getIndexField().getDatabaseName() + " = ?)");
 					}
 				}
             }
@@ -88,7 +93,7 @@ public class Utn
             if(f.isAnnotationPresent(Relation.class)) {
 				Relation r = f.getAnnotation(Relation.class);
             	MappedClass relationship = getMappedClass(r.type());
-            	m.addRelationship(relationship, f, Column.LAZY, r.att());
+            	m.addRelationship(relationship, f, Relationship.RELATION, r.att() + " = ?");
 			}
         }
     }
@@ -103,7 +108,7 @@ public class Utn
 				if (c.getJoinMappedClass() != null) {
 					value = parseResult(rs, c.getJoinMappedClass().getMappedClass());
 				} else {
-					value = rs.getObject(c.getDatabaseName());
+					value = rs.getObject(getMappedClass(dtoClass).getAlias() + "_" + c.getDatabaseName());
 				}
 				c.getField().setAccessible(true);
 				c.getField().set(obj, value);
