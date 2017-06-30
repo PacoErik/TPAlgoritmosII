@@ -1,12 +1,15 @@
 package utn.domain;
 
 import org.mockito.cglib.proxy.Enhancer;
+import utn.ann.Column;
 import utn.exceptions.WrongParameterException;
 import utn.util.StringUtil;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MappedClass
 {
@@ -27,78 +30,97 @@ public class MappedClass
 
     private IndexField indexField;
 
-	private List<ClassField> classFields = new ArrayList<ClassField>();
-    private List<Relationship> relationships = new ArrayList<Relationship>();
+	private Map<String, ClassField> classFields = new HashMap<>();
+    private List<Relationship> relationships = new ArrayList<>();
 
-    public Object create() {
-        return enhancer.create();
-    }
+    public Object create() { return enhancer.create(); }
 
     public ClassField addClassField(Field field, String databaseName, int fetchType){
         ClassField n = new ClassField(field, databaseName, fetchType);
-        getClassFields().add(n);
+        getClassFields().put(field.getName(), n);
         return n;
     }
 
     public void addIndexField(Field field, String databaseName, int fetchType, boolean identity){
         indexField = new IndexField(field, databaseName, fetchType, identity);
-        getClassFields().add(indexField);
+        getClassFields().put(field.getName(), indexField);
     }
 
     public void addRelationship(MappedClass destiny, Field field, int fetchType, String attribute){
         relationships.add(new Relationship(destiny, field, fetchType, attribute));
     }
 
-    public IndexField getIndexField() {
-        return indexField;
-    }
+    public IndexField getIndexField() { return indexField; }
 
-    public List<Relationship> getRelationships() {
-        return relationships;
-    }
+    public List<Relationship> getRelationships() { return relationships; }
 
-    protected List<String> getDatabaseFiledsNameJoin () {
-        List<String> ret = new ArrayList<String>();
-        for (ClassField c : getClassFields()) {
-                ret.addAll(c.getClassFields(getAlias()));
+    protected List<String> getDatabaseFiledsName() {
+        List<String> ret = new ArrayList<>();
+        for (ClassField c : getClassFields().values()) {
+            if (c.getFetchType() == ClassField.EAGER) ret.addAll(c.getClassFields(getAlias()));
         }
         return ret;
     }
 
-    protected List<String> getDatabaseFiledsName () {
-        List<String> ret = new ArrayList<String>();
-        for (ClassField c : getClassFields()) {
-            if (!((c.getDatabaseName() == getIndexField().getDatabaseName()) && (getIndexField().getIdentity())))
-                ret.add(c.getDatabaseName());
+    protected List<String> getDatabaseFiledsNameExceptIndex() {
+        List<String> ret = new ArrayList<>();
+        for (ClassField c : getClassFields().values()) {
+            if (!((c.getDatabaseName() == getIndexField().getDatabaseName()) && (getIndexField().getIdentity()))) {
+                if (c.getFetchType() == ClassField.EAGER) ret.add(c.getDatabaseName());
+            }
         }
         return ret;
     }
 
     protected String getJoins () {
         String q = "";
-        for (ClassField c : getClassFields()) {
-            q += c.getJoins(alias);
+        for (ClassField c : getClassFields().values()) {
+            if (c.getFetchType() == ClassField.EAGER) q += c.getJoins(alias);
         }
         return q;
     }
 
     protected String getXql (String padreClase, String xql) {
-        for (ClassField c : getClassFields()) {
+        for (ClassField c : getClassFields().values()) {
             xql = c.getXql(padreClase, getAlias(), xql);
         }
         return xql;
     }
 
     public String getSelect(String xql) throws WrongParameterException {
-        String q = "";
-        q = "SELECT " + StringUtil.join(getDatabaseFiledsNameJoin(), ", ");
+        List<String> select = getDatabaseFiledsName();
+        String joins = getJoins();
+
+        for (String s:xql.split(" ")) {
+            if (s.startsWith("$")) {
+                try {
+                    if (getClassFields().containsKey(s.substring(1, s.indexOf(".")))) {
+                        ClassField lazyField = getClassFields().get(s.substring(1, s.indexOf(".")));
+
+                        if (lazyField.getFetchType() != Column.EAGER) {
+                            joins += lazyField.getJoins(alias, false);
+                        }
+                    }
+
+                    if (getClassFields().containsKey(s.substring(1, s.indexOf(".")))) {
+
+                    }
+
+                }
+                catch (Exception ex){ }
+            }
+        }
+
+        xql = getXql("", xql);
+
+        String q = "SELECT " + StringUtil.join(select, ", ");
         q += " FROM " + getDatabaseName();
         q += " AS " + getAlias();
-        q += getJoins();
+        q += joins;
 
         if(xql.length() > 0) {
-            q += " WHERE " + getXql("", xql);
 
+            q += " WHERE " + xql;
             if (q.contains(" $")) throw new WrongParameterException();
         }
 
@@ -119,7 +141,7 @@ public class MappedClass
     }
 
     public String getInsert() throws WrongParameterException {
-        List<String> fields = getDatabaseFiledsName();
+        List<String> fields = getDatabaseFiledsNameExceptIndex();
         String q = "";
         q = "INSERT INTO " + getDatabaseName();
         q += "(" + StringUtil.join(fields, ", ") + ") VALUES (";
@@ -147,15 +169,9 @@ public class MappedClass
 
     public Class getMappedClass() { return mappedClass; }
 
-    public String getDatabaseName() {
-        return databaseName;
-    }
+    public String getDatabaseName() { return databaseName; }
 
-    public String getAlias() {
-        return alias;
-    }
+    public String getAlias() { return alias; }
 
-    public List<ClassField> getClassFields() {
-        return classFields;
-    }
+    public Map<String, ClassField> getClassFields() { return classFields; }
 }

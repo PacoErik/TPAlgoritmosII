@@ -2,7 +2,6 @@ package utn.domain;
 
 import utn.ann.Column;
 
-import java.io.File;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +10,10 @@ import java.util.List;
  * Created by TATIANA on 22/4/2017.
  */
 public class ClassField {
+    public static int LAZY = Column.LAZY;
+    public static int EAGER = Column.EAGER;
+    public static int RELATION = 3;
+
     private static List<String> quotedClasses() {
         List<String> ret = new ArrayList<String>();
         ret.add("class java.lang.String");
@@ -21,7 +24,7 @@ public class ClassField {
     private Field field;
     private String databaseName;
     private MappedClass joinMappedClass;
-    private int fetchType = Column.EAGER;
+    private int fetchType = EAGER;
 
     public ClassField(Field field, String databaseName, int fetchType) {
         this.databaseName = databaseName;
@@ -29,33 +32,19 @@ public class ClassField {
         this.fetchType = fetchType;
     }
 
-    public Field getField() {
-        return field;
-    }
+    public Field getField() { return field; }
 
-    public String getClassName() {
-        return field.getName();
-    }
+    public String getClassName() { return field.getName(); }
 
-    public String getDatabaseName() {
-        return databaseName;
-    }
+    public String getDatabaseName() { return databaseName; }
 
-    public int getFetchType() {
-        return fetchType;
-    }
+    public int getFetchType() { return fetchType; }
 
-    public Class getDataType() {
-        return (Class) field.getGenericType();
-    }
+    public Class getDataType() { return (Class) field.getGenericType(); }
 
-    public MappedClass getJoinMappedClass() {
-        return joinMappedClass;
-    }
+    public MappedClass getJoinMappedClass() { return joinMappedClass; }
 
-    public void setJoinMappedClass(MappedClass joinMappedClass) {
-        this.joinMappedClass = joinMappedClass;
-    }
+    public void setJoinMappedClass(MappedClass joinMappedClass) { this.joinMappedClass = joinMappedClass; }
 
     protected List<String> getClassFields(String alias) {
         List<String> ret = new ArrayList<String>();
@@ -65,15 +54,19 @@ public class ClassField {
             ret.add(databaseName);
 
         if (joinMappedClass != null)
-            ret.addAll(joinMappedClass.getDatabaseFiledsNameJoin());
+            ret.addAll(joinMappedClass.getDatabaseFiledsName());
 
         return ret;
     }
 
     protected String getJoins(String alias) {
+        return getJoins(alias, true);
+    }
+
+    protected String getJoins(String alias, Boolean ignoreLazy) {
         String q = "";
 
-        if (joinMappedClass != null && getFetchType() == Column.EAGER) {
+        if (joinMappedClass != null && (getFetchType() == Column.EAGER || !ignoreLazy)) {
             q += " INNER JOIN " + joinMappedClass.getDatabaseName() + " AS " + joinMappedClass.getAlias() +
                     " ON " + joinMappedClass.getAlias() + "." + joinMappedClass.getIndexField().getDatabaseName() +
                     " = " + alias + "." + databaseName;

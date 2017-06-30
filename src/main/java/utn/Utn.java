@@ -74,18 +74,17 @@ public class Utn
 					m.addIndexField(f, c.name(), c.fetchType(), i.strategy() == Id.IDENTITY);
 				}
 				else {
-					if (c.fetchType() == Column.EAGER) {
-						ClassField classField = m.addClassField(f, c.name(), c.fetchType());
-						MappedClass joinMappedClass = getMappedClass((Class) f.getGenericType());
-						if (joinMappedClass != null) classField.setJoinMappedClass(joinMappedClass);
-					}
-					else {
+					ClassField classField = m.addClassField(f, c.name(), c.fetchType());
+					MappedClass joinMappedClass = getMappedClass((Class) f.getGenericType());
+					if (joinMappedClass != null) classField.setJoinMappedClass(joinMappedClass);
+
+					if (c.fetchType() == Column.LAZY) {
 						MappedClass relationship = getMappedClass((Class) f.getGenericType());
 						m.addRelationship(relationship, f, Relationship.LAZY_COLUMN,
-								relationship.getIndexField().getDatabaseName() +
-								" = (SELECT " + m.getAlias() + "." + c.name() + " FROM " + m.getDatabaseName() +
-								" AS " + m.getAlias() + " WHERE " +  m.getAlias() + "." +
-								m.getIndexField().getDatabaseName() + " = ?)");
+							relationship.getIndexField().getDatabaseName() +
+							" = (SELECT " + m.getAlias() + "." + c.name() + " FROM " + m.getDatabaseName() +
+							" AS " + m.getAlias() + " WHERE " +  m.getAlias() + "." +
+							m.getIndexField().getDatabaseName() + " = ?)");
 					}
 				}
             }
@@ -103,7 +102,7 @@ public class Utn
 
 		Object value = null;
 
-		for(ClassField c : getMappedClass(dtoClass).getClassFields()) {
+		for(ClassField c : getMappedClass(dtoClass).getClassFields().values()) {
 			if (c.getFetchType() != Column.LAZY) {
 				if (c.getJoinMappedClass() != null) {
 					value = parseResult(rs, c.getJoinMappedClass().getMappedClass());
@@ -203,7 +202,7 @@ public class Utn
 		fieldId.setAccessible(true);
 
 		String xql = " SET ";
-		for (ClassField c : getMappedClass(dto.getClass()).getClassFields()) {
+		for (ClassField c : getMappedClass(dto.getClass()).getClassFields().values()) {
 			if (c.getDatabaseName() != getMappedClass(dto.getClass()).getIndexField().getDatabaseName())
 				xql += String.format("%s = :%s, ", c.getDatabaseName(), c.getDatabaseName());
 		}
@@ -212,7 +211,7 @@ public class Utn
 
 		String q = _update(dto.getClass(), xql);
 
-		for (ClassField c : getMappedClass(dto.getClass()).getClassFields()){
+		for (ClassField c : getMappedClass(dto.getClass()).getClassFields().values()){
 			q = c.replaceNamedParameter(q, dto);
 		}
 
@@ -262,7 +261,7 @@ public class Utn
 	// Retorna: la cantidad de filas afectadas luego de ejecutar el SQL
 	public static int insert(Connection con, Object dto) throws IllegalArgumentException, IllegalAccessException, SQLException, NoSuchFieldException, ClassNotFoundException {
 		String q = _insert(dto.getClass());
-		for (ClassField c : getMappedClass(dto.getClass()).getClassFields()){
+		for (ClassField c : getMappedClass(dto.getClass()).getClassFields().values()){
 			q = c.replaceNamedParameter(q, dto);
 		}
 

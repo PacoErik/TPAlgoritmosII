@@ -23,10 +23,11 @@ public class Test
 		// verifico el find
 		Persona p = Utn.find(con,Persona.class,12);
 		Assert.assertEquals(p.getNombre(),"Pablo");
-		//Assert.assertEquals((Integer)p.getOcupacion().getIdOcupacion(),(Integer)4);
 
 		// ocupacion es LAZY => debe permanecer NULL hasta que haga el get
 		Assert.assertNull(p.ocupacion);
+
+		Assert.assertEquals((Integer)p.getOcupacion().getIdOcupacion(),(Integer)4);
 
 		// debe traer el objeto
 		Ocupacion o = p.getOcupacion();
@@ -64,5 +65,11 @@ public class Test
 			Assert.assertEquals(p1.getNombre(),p.getNombre());
 		}
 		
+	}
+
+	@org.junit.Test
+	public void testXQL() throws SQLException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException, IOException {
+		Connection con = UtnConnectionFactory.getConnection();
+		Utn.query(con, Persona.class, "$ocupacion.tipoOcupacion.descripcion LIKE ?", "Profesional");
 	}
 }
